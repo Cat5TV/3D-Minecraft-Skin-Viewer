@@ -1,6 +1,6 @@
 <!--
     A hodgepodge of random scripts to aid in rendering Minecraft skins
-    Coalpha2right (C) 2014 Kent Rasmussen
+    Copyright (C) 2014 Kent Rasmussen
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a coalpha2 of the GNU General Public License
+    You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
 Latest code should be available at https://github.com/earthiverse
@@ -128,7 +128,7 @@ body {
 	<label><input id="rightLeg2Toggle" type="checkbox" checked>Right Leg</label>
 	
 	<strong>Other Option</strong>
-	<label><input id="allowFullWindowDragToggle" type="checkbox" checked>Allow Full Window Drag</label>
+	<label><input id="allowFullScreenDragToggle" type="checkbox" checked>Allow Full Screen Drag</label>
 </div>
 <div id="model">
 </div>
@@ -148,7 +148,7 @@ body {
 	var originMouseY = 0;
 	var isMouseDown = false;
 	var displayCanvas;
-	var allowFullWindowDrag=true;
+	var allowFullScreenDrag=true;
 	var onMouseMove = function(e) {
 		if (isMouseDown) {
 			mouseX = e.pageX - displayCanvas.offsetLeft;
@@ -928,7 +928,7 @@ body {
 		}, false);
 		window.addEventListener('mousemove', onMouseMove, false);
 		displayCanvas.addEventListener('mouseout', function(e) {
-			if(!allowFullWindowDrag)
+			if(!allowFullScreenDrag)
 				isMouseDown = false;
 		}, false);
 
@@ -1074,10 +1074,10 @@ body {
 		var rightLeg2 = scene.getObjectByName("rightLeg2", false);
 		rightLeg2.visible = rightLeg2Toggle.checked;
 	}
-	allowFullWindowDragToggle = document.getElementById('allowFullWindowDragToggle');
-	allowFullWindowDragToggle.addEventListener("change", allowFullWindowDragChange, false);
-	function allowFullWindowDragChange() {
-		allowFullWindowDrag=allowFullWindowDragToggle.checked;
+	allowFullScreenDragToggle = document.getElementById('allowFullScreenDragToggle');
+	allowFullScreenDragToggle.addEventListener("change", allowFullScreenDragChange, false);
+	function allowFullScreenDragChange() {
+		allowFullScreenDrag=allowFullScreenDragToggle.checked;
 	}
 	
 	// Change the username
