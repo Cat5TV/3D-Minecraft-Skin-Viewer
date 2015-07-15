@@ -86,6 +86,8 @@ body {
 	left: 86px;
 	position:absolute;
 	z-index:1;
+	/*To avoid canvas is too large*/
+	width:64px;
 }
 
 #info {
@@ -166,16 +168,20 @@ body {
 	img.onload = function() {
 		console.log("Loaded Image");
 		
+		//Change the size of canvas
+		canvas.width=img.width;
+		canvas.height=img.width;
+		
 		// Erase what was on the canvas before
-		context.clearRect(0, 0, 64, 64);
+		context.clearRect(0, 0, img.width, img.width);
 		
 		// Draw the image to the canvas
 		context.drawImage(img, 0, 0);
 		
 		// Convert the image if need be
-		if(img.height == 32) Convert6432To6464(context);
-		FixNonVisible(context);
-		FixOverlay(context);
+		if(img.height == img.width/2) Convert6432To6464(context,img.width/64);
+		FixNonVisible(context,img.width/64);
+		FixOverlay(context,img.width/64);
 		
 		skinTexture.needsUpdate = true;
 	
@@ -195,7 +201,8 @@ body {
 	
 	// I use crafatar because it allows CORS requests.
 	// Minotar stopped working.
-	img.src = 'http://crafatar.com/skins/earthiverse';
+	//img.src = 'http://crafatar.com/skins/earthiverse';
+	img.src = 'http://www.skinme.cc:88/skins/10.png';
 	
 	function RenderSkin() {
 		// Head Parts
