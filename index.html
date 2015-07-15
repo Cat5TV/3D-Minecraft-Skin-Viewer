@@ -129,6 +129,8 @@ body {
 	
 	<strong>Other Option</strong>
 	<label><input id="allowFullScreenDragToggle" type="checkbox" checked>Allow Full Screen Drag</label>
+	<label><input id="playQuicklyToggle" type="checkbox">Play Quickly</label>
+	<label><input id="stopPlayToggle" type="checkbox">Stop Play</label>
 </div>
 <div id="model">
 </div>
@@ -160,6 +162,8 @@ body {
 			originMouseY = mouseY;
 		}
 	};
+	
+	var speed=1;
 	
 	var radius = 32;
 	var alpha1 = 0; //For camera y rotation
@@ -946,7 +950,7 @@ body {
 		requestAnimationFrame(Animate);
 		
 		if(!isMouseDown){
-			alpha1 += Math.PI / 360;
+			alpha1 += Math.PI / 360*speed;
 			
 			if(alpha2<0){
 				alpha2+=Math.PI / 360;
@@ -971,7 +975,7 @@ body {
 			}
 		}
 		
-		alpha3+=Math.PI / 180*0.5;
+		alpha3+=Math.PI / 180*0.5*speed;
 		
 		camera.position.y = radius*Math.sin(alpha2);
 		camera.position.z = radius*Math.cos(alpha1);
@@ -1079,6 +1083,13 @@ body {
 	function allowFullScreenDragChange() {
 		allowFullScreenDrag=allowFullScreenDragToggle.checked;
 	}
+	playQuicklyToggle = document.getElementById('playQuicklyToggle');
+	playQuicklyToggle.addEventListener("change", playQuickly, false);
+	function playQuickly() {
+		speed=stopPlayToggle.checked?0:playQuicklyToggle.checked?4:1;
+	}
+	stopPlayToggle = document.getElementById('stopPlayToggle');
+	stopPlayToggle.addEventListener("change", playQuickly, false);
 	
 	// Change the username
 	document.getElementById('username').onkeypress = function(e){
