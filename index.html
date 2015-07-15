@@ -1,6 +1,6 @@
 <!--
     A hodgepodge of random scripts to aid in rendering Minecraft skins
-    Copyright (C) 2014 Kent Rasmussen
+    Coalpha2right (C) 2014 Kent Rasmussen
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
+    You should have received a coalpha2 of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
 Latest code should be available at https://github.com/earthiverse
@@ -126,6 +126,9 @@ body {
 	<label><input id="rightArm2Toggle" type="checkbox" checked>Right Arm</label>
 	<label><input id="leftLeg2Toggle" type="checkbox" checked>Left Leg</label>
 	<label><input id="rightLeg2Toggle" type="checkbox" checked>Right Leg</label>
+	
+	<strong>Other Option</strong>
+	<label><input id="allowFullWindowDragToggle" type="checkbox" checked>Allow Full Window Drag</label>
 </div>
 <div id="model">
 </div>
@@ -139,13 +142,33 @@ body {
 	
 	var rightLeg2Box, leftLeg2Box;
 	
+	var deltaMouseX = 0;
+	var deltaMouseY = 0;
+	var originMouseX = 0;
+	var originMouseY = 0;
+	var isMouseDown = false;
+	var displayCanvas;
+	var allowFullWindowDrag=true;
+	var onMouseMove = function(e) {
+		if (isMouseDown) {
+			mouseX = e.pageX - displayCanvas.offsetLeft;
+			deltaMouseX = mouseX - originMouseX;
+			originMouseX = mouseX;
+			
+			mouseY = e.pageY - displayCanvas.offsetTop;
+			deltaMouseY = mouseY - originMouseY;
+			originMouseY = mouseY;
+		}
+	};
+	
 	var radius = 32;
-	var alpha = 0;
+	var alpha1 = 0; //For camera y rotation
+	var alpha2 = 0; //For camera x rotation
+	var alpha3 = 0; //For arms and legs y rotation (Swing)
 	
 	var sidebarWidth = 250;
 
 	camera = new THREE.PerspectiveCamera(75, (window.innerWidth - sidebarWidth) / window.innerHeight, 1, 10000);
-	camera.position.y = -12;
 	
 	scene = new THREE.Scene();
 	
@@ -892,6 +915,22 @@ body {
 		renderer.setSize(window.innerWidth - sidebarWidth, window.innerHeight);
 		
 		window.addEventListener('resize', onWindowResize, false);
+		
+		displayCanvas=renderer.domElement;
+		displayCanvas.addEventListener('mousedown', function(e) {
+			e.preventDefault();
+			originMouseX = e.pageX - displayCanvas.offsetLeft;
+			originMouseY = e.pageY - displayCanvas.offsetTop;
+			isMouseDown = true;
+		}, false);
+		window.addEventListener('mouseup', function(e) {
+			isMouseDown = false;
+		}, false);
+		window.addEventListener('mousemove', onMouseMove, false);
+		displayCanvas.addEventListener('mouseout', function(e) {
+			if(!allowFullWindowDrag)
+				isMouseDown = false;
+		}, false);
 
 		model.appendChild(renderer.domElement);
 	}
@@ -902,30 +941,57 @@ body {
 
 	    renderer.setSize(window.innerWidth - sidebarWidth, window.innerHeight);
 	}
-	
+
 	function Animate() {
 		requestAnimationFrame(Animate);
 		
-		camera.rotation.y = alpha;
+		if(!isMouseDown){
+			alpha1 += Math.PI / 360;
+			
+			if(alpha2<0){
+				alpha2+=Math.PI / 360;
+				if(alpha2>0)
+					alpha2=0;
+			}else if(alpha2>0){
+				alpha2-=Math.PI / 360;
+				if(alpha2<0)
+					alpha2=0;
+			}
+		}else{
+			alpha1 += (-deltaMouseX/(window.innerWidth - sidebarWidth)/(radius*2)*1000);
+			deltaMouseX=0;
+			
+			alpha2+=deltaMouseY/window.innerHeight*5;
+			deltaMouseY=0;
+			if(alpha2>(Math.PI / 180*40)){
+				alpha2=Math.PI / 180*40;
+			}
+			if(alpha2<(-Math.PI / 180*30)){
+				alpha2=-Math.PI / 180*30;
+			}
+		}
 		
-		//alpha = /*(Math.PI / 2)*/ + (Math.PI / 16);
-		alpha += Math.PI / 320;
-		camera.position.z = radius*Math.cos(alpha);
-		camera.position.x = radius*Math.sin(alpha);
+		alpha3+=Math.PI / 180*0.5;
+		
+		camera.position.y = radius*Math.sin(alpha2);
+		camera.position.z = radius*Math.cos(alpha1);
+		camera.position.x = radius*Math.sin(alpha1);
+		camera.position.setLength(30);
+		camera.lookAt(new THREE.Vector3(0, -12, 0));
 		
 		//Leg Swing
-		leftLeg2Mesh.rotation.x = leftLegMesh.rotation.x = Math.cos(alpha*4);
+		leftLeg2Mesh.rotation.x = leftLegMesh.rotation.x = Math.cos(alpha3*4);
 		leftLeg2Mesh.position.z = leftLegMesh.position.z = 0 - 6*Math.sin(leftLegMesh.rotation.x);
 		leftLeg2Mesh.position.y = leftLegMesh.position.y = -16 - 6*Math.abs(Math.cos(leftLegMesh.rotation.x));
-		rightLeg2Mesh.rotation.x = rightLegMesh.rotation.x = Math.cos(alpha*4 + (Math.PI));
+		rightLeg2Mesh.rotation.x = rightLegMesh.rotation.x = Math.cos(alpha3*4 + (Math.PI));
 		rightLeg2Mesh.position.z = rightLegMesh.position.z = 0 - 6*Math.sin(rightLegMesh.rotation.x);
 		rightLeg2Mesh.position.y = rightLegMesh.position.y = -16 - 6*Math.abs(Math.cos(rightLegMesh.rotation.x));
 		
 		//Arm Swing
-		leftArm2Mesh.rotation.x = leftArmMesh.rotation.x = Math.cos(alpha*4 + (Math.PI));
+		leftArm2Mesh.rotation.x = leftArmMesh.rotation.x = Math.cos(alpha3*4 + (Math.PI));
 		leftArm2Mesh.position.z = leftArmMesh.position.z = 0 - 6*Math.sin(leftArmMesh.rotation.x);
 		leftArm2Mesh.position.y = leftArmMesh.position.y = -4 - 6*Math.abs(Math.cos(leftArmMesh.rotation.x));
-		rightArm2Mesh.rotation.x = rightArmMesh.rotation.x = Math.cos(alpha*4);
+		rightArm2Mesh.rotation.x = rightArmMesh.rotation.x = Math.cos(alpha3*4);
 		rightArm2Mesh.position.z = rightArmMesh.position.z = 0 - 6*Math.sin(rightArmMesh.rotation.x);
 		rightArm2Mesh.position.y = rightArmMesh.position.y = -4 - 6*Math.abs(Math.cos(rightArmMesh.rotation.x));
 		
@@ -1007,6 +1073,11 @@ body {
 	function toggleRightLeg2() {
 		var rightLeg2 = scene.getObjectByName("rightLeg2", false);
 		rightLeg2.visible = rightLeg2Toggle.checked;
+	}
+	allowFullWindowDragToggle = document.getElementById('allowFullWindowDragToggle');
+	allowFullWindowDragToggle.addEventListener("change", allowFullWindowDragChange, false);
+	function allowFullWindowDragChange() {
+		allowFullWindowDrag=allowFullWindowDragToggle.checked;
 	}
 	
 	// Change the username
