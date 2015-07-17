@@ -90,6 +90,15 @@ body {
 	width:64px;
 }
 
+#canvas2 {
+	bottom:5px;
+	left: 155px;
+	position:absolute;
+	z-index:1;
+	/*To avoid canvas is too large*/
+	width:22px;
+}
+
 #info {
 	color: #FFFFFF;
 	bottom:5px;
@@ -107,6 +116,7 @@ body {
 </style>
 <body>
 <canvas id="canvas" width="64" height="64"></canvas>
+<canvas id="canvas2" width="22" height="17"></canvas>
 <div id="sidebar">
 	<strong>Username</strong>
 	<input id="username" type="text" value="earthiverse">
@@ -118,6 +128,7 @@ body {
 	<label><input id="rightArmToggle" type="checkbox" checked>Right Arm</label>
 	<label><input id="leftLegToggle" type="checkbox" checked>Left Leg</label>
 	<label><input id="rightLegToggle" type="checkbox" checked>Right Leg</label>
+	<label><input id="capeToggle" type="checkbox" checked>Cape</label>
 	
 	<strong>Toggle Visibility - Secondary Layer</strong>
 	<label><input id="head2Toggle" type="checkbox" checked>Head</label>
@@ -140,9 +151,13 @@ body {
 </div>
 <script type="text/javascript">
 	var scene, camera, renderer;
-	var geometry, material, mesh;
+	var geometry, material, mesh, material3;
 	
 	var rightLeg2Box, leftLeg2Box;
+	
+	var capeLoaded=false;
+	var capeToggle = document.getElementById('capeToggle');
+	var cape;
 	
 	var deltaMouseX = 0;
 	var deltaMouseY = 0;
@@ -176,6 +191,7 @@ body {
 	
 	scene = new THREE.Scene();
 	
+	//Skin Part
 	canvas = document.getElementById('canvas');
         canvas.width = 64;
         canvas.height = 64;
@@ -185,15 +201,26 @@ body {
 	skinTexture.magFilter = THREE.NearestFilter;
 	skinTexture.minFilter = THREE.NearestMipMapNearestFilter;
 	
+	//Cape Part
+	var canvas2 = document.getElementById('canvas2');
+	canvas2.width = 22;
+    canvas2.height = 17;
+    var context2 = canvas2.getContext("2d");
+	var capeTexture = new THREE.Texture(canvas2);
+	capeTexture.magFilter = THREE.NearestFilter;
+	capeTexture.minFilter = THREE.NearestMipMapNearestFilter;
+	
 	// Get the texture for the skin
 	material = new THREE.MeshBasicMaterial({map: skinTexture, side: THREE.FrontSide});
 	material2 = new THREE.MeshBasicMaterial({map: skinTexture, transparent: true, opacity: 1, alphaTest: 0.5, side: THREE.DoubleSide});
+	// Get the texture for the cape
+	material3 = new THREE.MeshBasicMaterial({map: capeTexture});
 	
 	var img = new Image();
 	img.crossOrigin = '';
 	var hasAnimate = false;
 	img.onload = function() {
-		console.log("Loaded Image");
+		console.log("Loaded Skin");
 		
 		//Change the size of canvas
 		canvas.width=img.width;
@@ -225,6 +252,39 @@ body {
 	img.onerror = function() {
 		console.log("Failed loading " + img.src);
 	}
+	var img2=new Image();
+	img2.crossOrigin = '';
+	img2.onload = function() {
+		if(img2.width/img2.height==2){
+			canvas2.width=img2.width/64*22;
+			canvas2.height=img2.height/32*17;
+		}else{
+			canvas2.width=img2.width;
+			canvas2.height=img2.width;
+		}
+		console.log("Loaded Cape");
+		
+		// Erase what was on the canvas before
+		context2.clearRect(0, 0, canvas2.width, canvas2.height);
+		
+		// Draw the image to the canvas
+		context2.drawImage(img2, 0, 0);
+		
+		capeTexture.needsUpdate = true;
+		material3.needsUpdate = true;
+		
+		capeLoaded=true;
+		if(!hasAnimate)
+		{
+			RenderSkin();
+			hasAnimate = true;
+			Animate();
+		}
+	}
+	img.onerror = function() {
+	capeLoaded=false;
+		console.log("Failed loading " + img.src);
+	}
 	
 	// I use crafatar because it allows CORS requests.
 	// Minotar stopped working.
@@ -232,6 +292,9 @@ body {
 	
 	//A very HD Skin which can be used for test
 	//img.src = 'http://www.skinme.cc:88/skins/404.png';
+	
+	//Cape test URL
+	img2.src = 'http://www.skinme.cc:88/cloaks/2129.png';
 	
 	function RenderSkin() {
 		// Head Parts
@@ -912,6 +975,63 @@ body {
 		leftLeg2Mesh.position.x = 2;
  		scene.add(leftLeg2Mesh);
 		
+		// Cape Parts
+		var capeTop = [
+			new THREE.Vector2(1/22, 21/17),
+			new THREE.Vector2(11/22, 21/17),
+			new THREE.Vector2(11/22, 22/17),
+			new THREE.Vector2(1/22, 22/17),
+		];
+		var capeBottom = [
+			new THREE.Vector2(11/22, 16/17),
+			new THREE.Vector2(21/22, 16/17),
+			new THREE.Vector2(21/22, 16/17),
+			new THREE.Vector2(11/22, 16/17)
+		];
+		var capeLeft = [
+			new THREE.Vector2(11/22, 0/17),
+			new THREE.Vector2(12/22, 0/17),
+			new THREE.Vector2(12/22, 16/17),
+			new THREE.Vector2(11/22, 16/17)
+		];
+		var capeFront = [
+			new THREE.Vector2(12/22, 0/17),
+			new THREE.Vector2(1, 0/17),
+			new THREE.Vector2(1, 16/17),
+			new THREE.Vector2(12/22, 16/17)
+		];
+		var capeRight = [
+			new THREE.Vector2(0, 0/17),
+			new THREE.Vector2(1/22, 0/17),
+			new THREE.Vector2(1/22, 16/17),
+			new THREE.Vector2(0, 16/17)
+		];
+		var capeBack = [
+			new THREE.Vector2(1/22, 0/17),
+			new THREE.Vector2(11/22, 0/17),
+			new THREE.Vector2(11/22, 16/17),
+			new THREE.Vector2(1/22, 16/17)
+		];
+		var capeBox = new THREE.BoxGeometry(10, 16, 1, 0, 0, 0);
+		capeBox.faceVertexUvs[0] = [];
+		capeBox.faceVertexUvs[0][0] = [capeRight[3], capeRight[0], capeRight[2]];
+		capeBox.faceVertexUvs[0][1] = [capeRight[0], capeRight[1], capeRight[2]];
+		capeBox.faceVertexUvs[0][2] = [capeLeft[3], capeLeft[0], capeLeft[2]];
+		capeBox.faceVertexUvs[0][3] = [capeLeft[0], capeLeft[1], capeLeft[2]];
+		capeBox.faceVertexUvs[0][4] = [capeTop[3], capeTop[0], capeTop[2]];
+		capeBox.faceVertexUvs[0][5] = [capeTop[0], capeTop[1], capeTop[2]];
+		capeBox.faceVertexUvs[0][6] = [capeBottom[0], capeBottom[3], capeBottom[1]];
+		capeBox.faceVertexUvs[0][7] = [capeBottom[3], capeBottom[2], capeBottom[1]];
+		capeBox.faceVertexUvs[0][8] = [capeFront[3], capeFront[0], capeFront[2]];
+		capeBox.faceVertexUvs[0][9] = [capeFront[0], capeFront[1], capeFront[2]];
+		capeBox.faceVertexUvs[0][10] = [capeBack[3], capeBack[0], capeBack[2]];
+		capeBox.faceVertexUvs[0][11] = [capeBack[0], capeBack[1], capeBack[2]];
+		capeMesh = new THREE.Mesh(capeBox, material3);
+		capeMesh.name = "cape";
+		capeMesh.position.x = 0;
+ 		scene.add(capeMesh);
+		cape = scene.getObjectByName("cape", false)
+		
 		// Add to page
 		container = document.getElementById('model');
 		
@@ -948,6 +1068,12 @@ body {
 
 	function Animate() {
 		requestAnimationFrame(Animate);
+		
+		if(!capeLoaded){
+			cape.visible = false;
+		}else{
+			cape.visible = capeToggle.checked;
+		}
 		
 		if(!isMouseDown){
 			alpha1 += Math.PI / 360*speed;
@@ -999,6 +1125,13 @@ body {
 		rightArm2Mesh.position.z = rightArmMesh.position.z = 0 - 6*Math.sin(rightArmMesh.rotation.x);
 		rightArm2Mesh.position.y = rightArmMesh.position.y = -4 - 6*Math.abs(Math.cos(rightArmMesh.rotation.x));
 		
+		//Cape Swing
+		if(capeLoaded){
+			capeMesh.rotation.x = Math.abs(Math.cos(alpha3*2+(Math.PI/4))/4)+Math.PI / 180*10;
+			capeMesh.position.z = -2.2 - 8*Math.abs(Math.sin(capeMesh.rotation.x));
+			capeMesh.position.y = -4 - 8*Math.abs(Math.cos(capeMesh.rotation.x));
+		}
+		
 		renderer.render(scene, camera);
 	}
 	
@@ -1041,6 +1174,12 @@ body {
 	function toggleRightLeg() {
 		var rightLeg = scene.getObjectByName("rightLeg", false);
 		rightLeg.visible = rightLegToggle.checked;
+	}
+	capeToggle.addEventListener("change", capeChange, false);
+	function capeChange() {
+		if(capeLoaded){
+			cape.visible = capeToggle.checked;
+		}
 	}
 	head2Toggle = document.getElementById('head2Toggle');
 	head2Toggle.addEventListener("change", toggleHead2, false);
